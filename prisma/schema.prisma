@@ -1,0 +1,126 @@
+datasource db {
+  provider = "postgresql" // ou mysql/sqlite
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String?   @unique
+  password      String
+  mfaEnabled    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+
+  deleted       Boolean  @default(false)
+  deletedAt     DateTime?
+  deletedEmail  String?
+
+  addresses     Address[]
+  userRoles     UserRole[]
+
+  preference  Preferences?
+}
+
+model Address {
+  id        String      @id @default(uuid())
+  street    String
+  number    String
+  city      String
+  state     String
+  country   String
+  county    String
+  zipCode   String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+
+  deleted   Boolean     @default(false)
+  deletedAt DateTime?
+
+
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Role{
+  id            String  @id @default(uuid())
+  name          String  @unique
+  description   String
+
+  createdAt      DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  deleted       Boolean @default(false)
+  deletedAt     DateTime?
+
+  UserRole UserRole[]
+}
+
+model UserRole{
+  userId      String
+  roleId      String
+
+  roleName    String
+  assignedBy  String
+  assignedAt  DateTime
+
+  description String
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId,roleId])
+  @@index([roleId])
+}
+
+model Preferences{
+  id            String @id @default(uuid())
+  displayName   String?
+  mainAddressId String?
+  avatar        String?
+  updateAt      DateTime @updatedAt
+
+  userId        String? @unique
+  user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+
+model Category{
+  id        String  @id @default(uuid())
+  name      String  @unique
+  slug      String  @unique
+
+  productCategories ProductCategory[]
+}
+
+model Product{
+  id        String @id @default(uuid())
+  name      String
+  slug      String
+  description String
+  active    Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  productCategories ProductCategory[]
+}
+
+model ProductCategory{
+  productId   String
+  categoryId  String
+
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId,categoryId])
+}
+
+
