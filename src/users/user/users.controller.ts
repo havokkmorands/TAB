@@ -9,11 +9,11 @@ import {
   Put,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { CreateAddressDto } from './dto/create-address.dto';
-import { CreateRoleDto } from './dto/create-role.dto';
-import { CreatePermisionDto } from './dto/create-permision.dto';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { CreateAddressDto } from '../dto/create-address.dto';
+import { CreateRoleDto } from '../dto/create-role.dto';
+import { CreatePermisionDto } from '../dto/create-permision.dto';
 import { AuthOnly, GuestOnly, NeededPermissions } from 'src/auth/guards/annotation-guard';
 
 @Controller('users')

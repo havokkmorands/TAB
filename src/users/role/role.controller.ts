@@ -1,8 +1,8 @@
-import { UsersService } from './users.service';
+import { UsersService } from '../user/users.service';
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
-import { AuthOnly } from '../auth/guards/annotation-guard';
-import { CreateRoleDto } from './dto/create-role.dto';
-import { CreatePermisionDto } from './dto/create-permision.dto';
+import { AuthOnly } from '../../auth/guards/annotation-guard';
+import { CreateRoleDto } from '../dto/create-role.dto';
+import { CreatePermisionDto } from '../dto/create-permision.dto';
 
 @Controller('role')
 @AuthOnly()

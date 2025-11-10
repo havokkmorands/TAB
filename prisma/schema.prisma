@@ -8,119 +8,310 @@ generator client {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  name          String
-  email         String?   @unique
-  password      String
-  mfaEnabled    Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id         String   @id @default(uuid())
+  name       String
+  email      String?  @unique
+  password   String
+  mfaEnabled Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
+  deleted      Boolean   @default(false)
+  deletedAt    DateTime?
+  deletedEmail String?
 
-  deleted       Boolean  @default(false)
-  deletedAt     DateTime?
-  deletedEmail  String?
+  addresses Address[]
+  userRoles UserRole[]
 
-  addresses     Address[]
-  userRoles     UserRole[]
+  preference Preferences?
 
-  preference  Preferences?
+  stylists StylistProfile[]
+
+  Reservation_Stylist Reservation[] @relation("stylist")
+
+  Reservation_Customer Reservation[] @relation("customer")
+
+  Booking_CustomerBookings Booking[] @relation("CustomerBookings")
+
+  Booking_StylistBookings Booking[] @relation("StylistBookings")
+
+  BookingStatusHistory BookingStatusHistory[]
+
+  Notification Notification[]
 }
 
 model Address {
-  id        String      @id @default(uuid())
-  street    String
-  number    String
-  city      String
-  state     String
-  country   String
-  county    String
-  zipCode   String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id      String @id @default(uuid())
+  street  String
+  number  String
+  city    String
+  state   String
+  country String
+  county  String
+  zipCode String
 
+  lat       Float
+  lng       Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  deleted   Boolean     @default(false)
+  deleted   Boolean   @default(false)
   deletedAt DateTime?
 
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stylist StylistProfile[]
+
+  Booking Booking[]
+
+  Reservation Reservation[]
 }
 
-model Role{
-  id            String  @id @default(uuid())
-  name          String  @unique
-  description   String
+model Role {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String
 
-  createdAt      DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  deleted       Boolean @default(false)
-  deletedAt     DateTime?
+  deleted   Boolean   @default(false)
+  deletedAt DateTime?
 
   UserRole UserRole[]
 }
 
-model UserRole{
-  userId      String
-  roleId      String
+model UserRole {
+  userId String
+  roleId String
 
-  roleName    String
-  assignedBy  String
-  assignedAt  DateTime
+  roleName   String
+  assignedBy String
+  assignedAt DateTime
 
   description String
 
-  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role        Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  @@id([userId,roleId])
+  @@id([userId, roleId])
   @@index([roleId])
 }
 
-model Preferences{
-  id            String @id @default(uuid())
+model Preferences {
+  id            String   @id @default(uuid())
   displayName   String?
   mainAddressId String?
   avatar        String?
   updateAt      DateTime @updatedAt
 
-  userId        String? @unique
-  user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model StylistProfile {
+  id     String @id @default(uuid())
+  userId String
 
+  baseAddressId String
+  serviceRadius Float  @default(20)
+  averageSpeed  Float  @default(25)
+  travelBuffer  Float  @default(30)
 
-model Category{
-  id        String  @id @default(uuid())
-  name      String  @unique
-  slug      String  @unique
-
-  productCategories ProductCategory[]
-}
-
-model Product{
-  id        String @id @default(uuid())
-  name      String
-  slug      String
-  description String
-  active    Boolean @default(false)
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-  productCategories ProductCategory[]
+  bio String
+
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  baseAddress Address @relation(fields: [baseAddressId], references: [id], onDelete: Cascade)
+
+  HairStyleMedia HairStyleMedia[]
+
+  StyleService StyleService[]
+
+  AvailabilityBlock AvailabilityBlock[]
+
+  TimeOff TimeOff[]
 }
 
-model ProductCategory{
-  productId   String
-  categoryId  String
-
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@id([productId,categoryId])
+enum MediaType {
+  IMAGE
+  VIDEO
 }
 
+model HairMedia {
+  id     String    @id @default(uuid())
+  type   MediaType @default(IMAGE)
+  source String
 
+  HairStyleMedia HairStyleMedia[]
+}
+
+model HairStyle {
+  id          String @id @default(uuid())
+  name        String
+  description String
+
+  basePrice       Decimal @db.Money
+  baseDurationMin Int
+
+  active  Boolean @default(true)
+  deleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime
+
+  StyleService StyleService[]
+
+  Booking Booking[]
+
+  Reservation Reservation[]
+}
+
+model HairStyleMedia {
+  stylistId String
+  mediaId   String
+
+  style StylistProfile @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  media HairMedia      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([stylistId, mediaId])
+}
+
+model StyleService {
+  stylistId   String
+  hairStyleId String
+
+  price       Decimal @db.Money
+  durationMin Int
+
+  stylist   StylistProfile @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  hairStyle HairStyle      @relation(fields: [hairStyleId], references: [id], onDelete: Cascade)
+
+  @@id([stylistId, hairStyleId])
+}
+
+enum WeekDay {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+model AvailabilityBlock {
+  id        String   @id @default(uuid())
+  stylistId String
+  startsAt  DateTime
+  endsAt    DateTime
+
+  weekDay WeekDay
+
+  updatedAt DateTime       @updatedAt
+  stylist   StylistProfile @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+}
+
+model TimeOff {
+  id        String   @id @default(uuid())
+  stylistId String
+  startsAt  DateTime
+  endsAt    DateTime
+  reason    String
+
+  stylist StylistProfile @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+}
+
+enum BookingStatus {
+  RESERVED // hold temporário (via Reservation/TTL)
+  PENDING // aguardando confirmação/pagamento
+  CONFIRMED
+  IN_ROUTE
+  IN_SERVICE
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Booking {
+  id         String        @id @default(uuid())
+  customerId String
+  stylistId  String
+  serviceId  String
+  addressId  String // endereço do atendimento (cliente)
+  // janela final calculada: início e fim incluindo duração do serviço
+  startsAt   DateTime
+  endsAt     DateTime
+  price      Decimal       @db.Money
+  status     BookingStatus
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  customer User                   @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Restrict)
+  stylist  User                   @relation("StylistBookings", fields: [stylistId], references: [id], onDelete: Restrict)
+  service  HairStyle              @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  address  Address                @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  history  BookingStatusHistory[]
+}
+
+model BookingStatusHistory {
+  id        String        @id @default(uuid())
+  bookingId String
+  status    BookingStatus
+  at        DateTime      @default(now())
+  byUserId  String?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  byUser  User?   @relation(fields: [byUserId], references: [id])
+
+  @@index([bookingId, at])
+}
+
+model Reservation {
+  // pré-bloqueio (soft hold) antes de virar booking
+  id         String   @id @default(uuid())
+  customerId String
+  stylistId  String
+  serviceId  String
+  addressId  String
+  startsAt   DateTime
+  endsAt     DateTime
+  expiresAt  DateTime // controlado também no Redis TTL
+  createdAt  DateTime @default(now())
+
+  customer User      @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
+  stylist  User      @relation("stylist", fields: [stylistId], references: [id], onDelete: Cascade)
+  service  HairStyle @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  address  Address   @relation(fields: [addressId], references: [id], onDelete: Cascade)
+
+  @@index([stylistId, startsAt, endsAt])
+  @@index([expiresAt])
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  channel   String // EMAIL | WHATSAPP | SOCKET
+  payload   Json
+  status    String // PENDING | SENT | ERROR
+  createdAt DateTime  @default(now())
+  sentAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OutboxEvent {
+  id        String   @id @default(uuid())
+  topic     String
+  key       String?
+  payload   Json
+  createdAt DateTime @default(now())
+  processed Boolean  @default(false)
+
+  @@index([processed, createdAt])
+}
